@@ -1,0 +1,82 @@
+/* 让首页文章列表区域变成左右双栏布局 */
+#board {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* 文章列表占左边大部分 */
+#board .board-col {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 侧边栏固定右侧 */
+#my-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 80px;
+}
+
+/* 卡片样式 */
+.sidebar-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 24px 16px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+/* 头像 */
+.sidebar-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 12px;
+}
+
+/* 名字 */
+.sidebar-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--text-color);
+  margin-bottom: 6px;
+}
+
+/* 签名 */
+.sidebar-bio {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+/* 文章/标签统计 */
+.sidebar-stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 13px;
+  color: var(--text-color);
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--board-bg);
+}
+
+/* 社交链接 */
+.sidebar-links a {
+  display: inline-block;
+  margin: 4px 8px;
+  color: var(--link-color);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.sidebar-links a:hover {
+  text-decoration: underline;
+}
