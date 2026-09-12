@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Order By和In处的SQL注入该怎么防？ | 林不到's 博客酒馆</title><meta name="author" content="Linbudao"><meta name="copyright" content="Linbudao"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta name="description" content="“林不到你sql发紫可能是预编译没写好” “你防不过我你信吗？” 标题的问题来自学长总结的一道高频面试问题 当时看到的时候，觉得还是挺简单的，因为Order by 和In后面跟的东西本质就不一样 但是为了做到尽量满分不漏回答，在读了一些文章配合ai深入学习之后记录一下 依旧要想知道怎么防御就要知道其漏洞原理 In处这里我想先说说In，因为in和where id&#x3D;是有异曲同工之妙的，本质都是“值位”">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Order By和In处的SQL注入该怎么防？">
-<meta property="og:url" content="https://linbudao.github.io/2026/06/24/Order-By%E5%92%8CIn%E5%A4%84%E7%9A%84SQL%E6%B3%A8%E5%85%A5%E8%AF%A5%E6%80%8E%E4%B9%88%E9%98%B2%EF%BC%9F/index.html">
+<meta property="og:url" content="https://linbudao.github.io/2026/06/24/Order-By%E5%92%8CIn%E5%A4%84%E7%9A%84SQL%E6%B3%A8%E5%85%A5%E8%AF%A5%E6%80%8E%E4%B9%88%E9%98%B2%EF%BC%9F/">
 <meta property="og:site_name" content="林不到&#39;s 博客酒馆">
 <meta property="og:description" content="“林不到你sql发紫可能是预编译没写好” “你防不过我你信吗？” 标题的问题来自学长总结的一道高频面试问题 当时看到的时候，觉得还是挺简单的，因为Order by 和In后面跟的东西本质就不一样 但是为了做到尽量满分不漏回答，在读了一些文章配合ai深入学习之后记录一下 依旧要想知道怎么防御就要知道其漏洞原理 In处这里我想先说说In，因为in和where id&#x3D;是有异曲同工之妙的，本质都是“值位”">
 <meta property="og:locale" content="zh_CN">
@@ -26,7 +26,7 @@
       "url": "https://linbudao.github.io"
     }
   ]
-}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://linbudao.github.io/2026/06/24/Order-By%E5%92%8CIn%E5%A4%84%E7%9A%84SQL%E6%B3%A8%E5%85%A5%E8%AF%A5%E6%80%8E%E4%B9%88%E9%98%B2%EF%BC%9F/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css?v=7.3.1"><script>
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://linbudao.github.io/2026/06/24/Order-By%E5%92%8CIn%E5%A4%84%E7%9A%84SQL%E6%B3%A8%E5%85%A5%E8%AF%A5%E6%80%8E%E4%B9%88%E9%98%B2%EF%BC%9F/"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css?v=7.3.1"><script>
     (() => {
       
     const saveToLocal = {

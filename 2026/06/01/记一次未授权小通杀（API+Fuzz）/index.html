@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>记一次未授权小通杀（API+Fuzz） | 林不到's 博客酒馆</title><meta name="author" content="Linbudao"><meta name="copyright" content="Linbudao"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta name="description" content="在之前打省护的时候发现数据很大一部分由未授权得来 而api未授权正是重灾区 之前测试某高校的时遇到一个系统是一个登录框  尝试弱口令sql等手法后无效，打不进去 于是就想扫扫有没有api之类的  发现&#x2F;api是可以访问的！ 拼接之后访问发现居然可以浏览目录文件  好家伙这下开整，慢慢分析文件 发现了大量接口，但都是和学校学科信息，实验室信息相关的  继续翻找，想找到一些用户列表接口  这">
 <meta property="og:type" content="article">
 <meta property="og:title" content="记一次未授权小通杀（API+Fuzz）">
-<meta property="og:url" content="https://linbudao.github.io/2026/06/01/%E8%AE%B0%E4%B8%80%E6%AC%A1%E6%9C%AA%E6%8E%88%E6%9D%83%E5%B0%8F%E9%80%9A%E6%9D%80%EF%BC%88API+Fuzz%EF%BC%89/index.html">
+<meta property="og:url" content="https://linbudao.github.io/2026/06/01/%E8%AE%B0%E4%B8%80%E6%AC%A1%E6%9C%AA%E6%8E%88%E6%9D%83%E5%B0%8F%E9%80%9A%E6%9D%80%EF%BC%88API+Fuzz%EF%BC%89/">
 <meta property="og:site_name" content="林不到&#39;s 博客酒馆">
 <meta property="og:description" content="在之前打省护的时候发现数据很大一部分由未授权得来 而api未授权正是重灾区 之前测试某高校的时遇到一个系统是一个登录框  尝试弱口令sql等手法后无效，打不进去 于是就想扫扫有没有api之类的  发现&#x2F;api是可以访问的！ 拼接之后访问发现居然可以浏览目录文件  好家伙这下开整，慢慢分析文件 发现了大量接口，但都是和学校学科信息，实验室信息相关的  继续翻找，想找到一些用户列表接口  这">
 <meta property="og:locale" content="zh_CN">
@@ -26,7 +26,7 @@
       "url": "https://linbudao.github.io"
     }
   ]
-}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://linbudao.github.io/2026/06/01/%E8%AE%B0%E4%B8%80%E6%AC%A1%E6%9C%AA%E6%8E%88%E6%9D%83%E5%B0%8F%E9%80%9A%E6%9D%80%EF%BC%88API+Fuzz%EF%BC%89/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css?v=7.3.1"><script>
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://linbudao.github.io/2026/06/01/%E8%AE%B0%E4%B8%80%E6%AC%A1%E6%9C%AA%E6%8E%88%E6%9D%83%E5%B0%8F%E9%80%9A%E6%9D%80%EF%BC%88API+Fuzz%EF%BC%89/"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css?v=7.3.1"><script>
     (() => {
       
     const saveToLocal = {
