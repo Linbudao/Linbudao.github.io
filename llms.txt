@@ -1,0 +1,13 @@
+﻿# 林不到's 博客酒馆
+> 记录 Web 安全与渗透测试的实操笔记：SQL 注入的防御边界、未授权接口的排查思路、Java 反序列化利用链，以及一些零散杂谈。
+
+## Key Pages
+- [主页](https://linbudao.github.io/)
+- [归档](https://linbudao.github.io/archive/)
+- [关于我](https://linbudao.github.io/about/)
+
+## Recent Posts
+- [URLDNS链](https://linbudao.github.io/posts/urldns%E9%93%BE/): 学习自 https://xz.aliyun.com/news/12113 https://www.cnblogs.com/Timesi/p/17156594.html http…
+- [Order By和In处的SQL注入该怎么防？](https://linbudao.github.io/posts/order-by%E5%92%8Cin%E5%A4%84%E7%9A%84sql%E6%B3%A8%E5%85%A5%E8%AF%A5%E6%80%8E%E4%B9%88%E9%98%B2/): “林不到你sql发紫可能是预编译没写好” “你防不过我你信吗？” 标题的问题来自学长总结的一道高频面试问题 当时看到的时候，觉得还是挺简单的，因为Order by 和In后面跟…
+- [记一次未授权小通杀（API+Fuzz）](https://linbudao.github.io/posts/%E8%AE%B0%E4%B8%80%E6%AC%A1%E6%9C%AA%E6%8E%88%E6%9D%83%E5%B0%8F%E9%80%9A%E6%9D%80apifuzz/): 在之前打省护的时候发现数据很大一部分由未授权得来 而api未授权正是重灾区 之前测试某高校的时遇到一个系统是一个登录框 尝试弱口令sql等手法后无效，打不进去 于是就想扫扫有没…
+- [第一篇博客](https://linbudao.github.io/posts/%E7%AC%AC%E4%B8%80%E7%AF%87%E5%8D%9A%E5%AE%A2/): 其实想做个人博客很久了 一直没有行动，一是感觉自己还很菜，没啥可写的 二是之前以为是很复杂的东西，看到大佬的前端写得很漂亮，很羡慕 最近感觉确实有必要走起来了，于是在gemin…
