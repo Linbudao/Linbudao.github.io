@@ -19,10 +19,10 @@
       <content type="html"><![CDATA[<p><strong>“Grafana根本就没有ssrf的漏洞！”</strong></p>
 <p><strong>林不到：“你只是怕了”</strong></p>
 <p>站点一上就是<code>grafana</code>的标准页面</p>
-<p></p><figure><img alt="image-20260913162308475" loading="lazy" width="2039" height="1217" src="/_astro/image-20260913162308475.CBDs27kB_Z2ifbxr.webp" /><figcaption>image-20260913162308475</figcaption></figure><p></p>
+<p><img alt="" loading="lazy" width="2039" height="1217" src="/_astro/grafana-ssrf-01.CBDs27kB_Z1Flg4H.webp" /></p>
 <p><code>grafana</code>是什么？</p>
 <section><h2>Grafana<a href="#grafana"><span>#</span></a></h2><p>简单来说就是运维人员放服务器运行比如什么CPU，内存这些指标的好看点的前端</p><p>但<code>grafana</code>自己是不存数据的，数据放在<strong>数据源（datasource）<strong>后端里面，最常见的是</strong>Prometheus</strong>（一个专门存监控数字的数据库），一般来说只有集群内部能访问到</p><p><code>grafana</code>需要对数据源进行连接，两种<code>access</code>模式：<code>proxy</code> 和<code>browser</code></p><p>其中<code>browser</code>也就是浏览器，该模式是安全的，请求者的浏览器去访问数据源那自然是  老子不给~</p><p>而<code>proxy</code>也就是grafana服务器去访问，那包是来就有呀兄弟给你了</p><p>这就是该组件ssrf原理</p></section>
-<section><h2>攻击<a href="#攻击"><span>#</span></a></h2><p>先看看常见健康路径确认状态</p><p></p><figure><img alt="image-20260913163629003" loading="lazy" width="666" height="301" src="/_astro/image-20260913163629003.CY7sg6iz_1U41lp.webp" /><figcaption>image-20260913163629003</figcaption></figure><p></p><p>确认是grafana13.0.1 这个接口不用鉴权，登录页都不用进</p><p>接下来翻翻js找找路径收集信息</p><div><figure><figcaption></figcaption><pre><code><div><div><div>1</div></div><div><span>/api/access-control/user/permissions</span></div></div></code></pre><div><div></div><div></div></div></figure></div><p>这个api给的是你当前状态（登录/未登录）能做哪些事的权限清单</p><p>看到一堆权限</p><p></p><figure><img alt="image-20260913165229931" loading="lazy" width="633" height="583" src="/_astro/image-20260913165229931.Biw9VMjl_ZDEeSz.webp" /><figcaption>image-20260913165229931</figcaption></figure><p></p><p>发现query（请求）权限</p><p>现在就要找找内网地址</p><div><figure><figcaption></figcaption><pre><code><div><div><div>1</div></div><div><span>/api/datasources</span></div></div></code></pre><div><div></div><div></div></div></figure></div><p>全是内网域名和内部服务，获取uid</p><p>最重要的，发现access全是proxy</p><p></p><figure><img alt="image-20260913170033027" loading="lazy" width="873" height="1433" src="/_astro/image-20260913170033027.p4J3nu6T_Z1CG9tq.webp" /><figcaption>image-20260913170033027</figcaption></figure><p></p><p>用grafana的内置代理转发接口来发请求</p><div><figure><figcaption></figcaption><pre><code><div><div><div>1</div></div><div><span>/api/datasources/proxy/uid/&lt;你的uid&gt;/&lt;你想让服务器替你访问的路径&gt;</span></div></div></code></pre><div><div></div><div></div></div></figure></div><p><code>/api/v1/labels</code> 是 Prometheus 的”列出所有指标名”接口，原本<code>&lt;内网Prometheus&gt;/api/v1/labels</code> 肯定是访问不上的，通过grafana转发接口可以获取信息，自此ssrf确认</p><p></p><figure><img alt="image-20260913170332228" loading="lazy" width="1174" height="1278" src="/_astro/image-20260913170332228.CI3l6gA4_Z1iWgtR.webp" /><figcaption>image-20260913170332228</figcaption></figure><p></p><p>现在我们用用 Prometheus 的查询语言 PromQL 看看集群信息</p><p>查询成功，之后任何内网数据都可以这样捞出来</p><p></p><figure><img alt="image-20260913171015577" loading="lazy" width="1432" height="542" src="/_astro/image-20260913171015577.CEksb2X2_Z1uONIU.webp" /><figcaption>image-20260913171015577</figcaption></figure><p></p><p>比如</p><p></p><figure><img alt="image-20260913173826796" loading="lazy" width="1469" height="891" src="/_astro/image-20260913173826796.BUrY_Adm_Z2wFqJM.webp" /><figcaption>image-20260913173826796</figcaption></figure><p></p><p>机器内网IP <code>10.0.***.93</code>、宿主机名、kubelet/kernel 精确版本、BOSKOS 业务身份、161 个 Secret 的目录清单、3847 种指标可查</p><p>完毕</p></section>]]></content>
+<section><h2>攻击<a href="#攻击"><span>#</span></a></h2><p>先看看常见健康路径确认状态</p><p><img alt="" loading="lazy" width="666" height="301" src="/_astro/grafana-ssrf-02.CY7sg6iz_2nmdj4.webp" /></p><p>确认是grafana13.0.1 这个接口不用鉴权，登录页都不用进</p><p>接下来翻翻js找找路径收集信息</p><div><figure><figcaption></figcaption><pre><code><div><div><div>1</div></div><div><span>/api/access-control/user/permissions</span></div></div></code></pre><div><div></div><div></div></div></figure></div><p>这个api给的是你当前状态（登录/未登录）能做哪些事的权限清单</p><p>看到一堆权限</p><p><img alt="" loading="lazy" width="633" height="583" src="/_astro/grafana-ssrf-03.Biw9VMjl_1h7zMy.webp" /></p><p>发现query（请求）权限</p><p>现在就要找找内网地址</p><div><figure><figcaption></figcaption><pre><code><div><div><div>1</div></div><div><span>/api/datasources</span></div></div></code></pre><div><div></div><div></div></div></figure></div><p>全是内网域名和内部服务，获取uid</p><p>最重要的，发现access全是proxy</p><p><img alt="" loading="lazy" width="873" height="1433" src="/_astro/grafana-ssrf-04.p4J3nu6T_Z19gh7z.webp" /></p><p>用grafana的内置代理转发接口来发请求</p><div><figure><figcaption></figcaption><pre><code><div><div><div>1</div></div><div><span>/api/datasources/proxy/uid/&lt;你的uid&gt;/&lt;你想让服务器替你访问的路径&gt;</span></div></div></code></pre><div><div></div><div></div></div></figure></div><p><code>/api/v1/labels</code> 是 Prometheus 的”列出所有指标名”接口，原本<code>&lt;内网Prometheus&gt;/api/v1/labels</code> 肯定是访问不上的，通过grafana转发接口可以获取信息，自此ssrf确认</p><p><img alt="" loading="lazy" width="1174" height="1278" src="/_astro/grafana-ssrf-05.CI3l6gA4_ebyll.webp" /></p><p>现在我们用用 Prometheus 的查询语言 PromQL 看看集群信息</p><p>查询成功，之后任何内网数据都可以这样捞出来</p><p><img alt="" loading="lazy" width="1432" height="542" src="/_astro/grafana-ssrf-06.CEksb2X2_2e91Ot.webp" /></p><p>比如</p><p><img alt="" loading="lazy" width="1469" height="891" src="/_astro/grafana-ssrf-07.BUrY_Adm_12xwCj.webp" /></p><p>机器内网IP <code>10.0.***.93</code>、宿主机名、kubelet/kernel 精确版本、BOSKOS 业务身份、161 个 Secret 的目录清单、3847 种指标可查</p><p>完毕</p></section>]]></content>
     </entry>
     <entry>
       <id>https://linbudao.github.io/posts/urldns%E9%93%BE/</id>
@@ -94,40 +94,40 @@
       <content type="html"><![CDATA[<p>在之前打省护的时候发现数据很大一部分由未授权得来</p>
 <p>而api未授权正是重灾区</p>
 <p>之前测试某高校的时遇到一个系统是一个登录框</p>
-<p></p><figure><img alt="image-20260610102607163" loading="lazy" width="2000" height="1064" src="/_astro/image-20260610102607163.CF6bQv5A_vVk82.webp" /><figcaption>image-20260610102607163</figcaption></figure><p></p>
+<p><img alt="" loading="lazy" width="2000" height="1064" src="/_astro/unauth-fuzz-01.CF6bQv5A_Z1QNibB.webp" /></p>
 <p>尝试弱口令sql等手法后无效，打不进去</p>
 <p>于是就想扫扫有没有api之类的</p>
-<p></p><figure><img alt="image-20260610103236291" loading="lazy" width="1104" height="266" src="/_astro/image-20260610103236291.TJ8oRJQe_jxH6T.webp" /><figcaption>image-20260610103236291</figcaption></figure><p></p>
+<p><img alt="" loading="lazy" width="1104" height="266" src="/_astro/unauth-fuzz-02.TJ8oRJQe_Z2iGQEs.webp" /></p>
 <p>发现/api是可以访问的！</p>
 <p>拼接之后访问发现居然可以浏览目录文件</p>
-<p></p><figure><img alt="image-20260610103346449" loading="lazy" width="1198" height="804" src="/_astro/image-20260610103346449.D_orFoXB_Zw3xiB.webp" /><figcaption>image-20260610103346449</figcaption></figure><p></p>
+<p><img alt="" loading="lazy" width="1198" height="804" src="/_astro/unauth-fuzz-03.D_orFoXB_ZHJBsa.webp" /></p>
 <p>好家伙这下开整，慢慢分析文件</p>
 <p>发现了大量接口，但都是和学校学科信息，实验室信息相关的</p>
-<p></p><figure><img alt="image-20260610103702658" loading="lazy" width="1491" height="1180" src="/_astro/image-20260610103702658.D3zbzHHn_1x9tD0.webp" /><figcaption>image-20260610103702658</figcaption></figure><p></p>
+<p><img alt="" loading="lazy" width="1491" height="1180" src="/_astro/unauth-fuzz-04.D3zbzHHn_Z1NFV60.webp" /></p>
 <p>继续翻找，想找到一些用户列表接口</p>
-<p></p><figure><img alt="image-20260610103955061" loading="lazy" width="1157" height="876" src="/_astro/image-20260610103955061.B3UGLLJM_ZoRs7o.webp" /><figcaption>image-20260610103955061</figcaption></figure><p></p>
+<p><img alt="" loading="lazy" width="1157" height="876" src="/_astro/unauth-fuzz-05.B3UGLLJM_QlYq9.webp" /></p>
 <p>这下来了！激动得直接拼接<code>/SiteOpen/GetUsers</code></p>
-<p></p><figure><img alt="image-20260610104100628" loading="lazy" width="1847" height="1328" src="/_astro/image-20260610104100628.BZ6YEqOW_Z1D67EA.webp" /><figcaption>image-20260610104100628</figcaption></figure><p></p>
+<p><img alt="" loading="lazy" width="1847" height="1328" src="/_astro/unauth-fuzz-06.BZ6YEqOW_ZvXM4e.webp" /></p>
 <p>结果一片空白，这时候冷静下来其实很好想到，一个页面空白了，最有可能的原因就是没有参数传入，于是我猜测GetUsers还需要参数拼接</p>
 <p>在尝试了id，userid等之后无果，突然猛地想到这种展示列表的接口后面很可能跟和页面展示参数相关的，没错就是<code>PageIndex</code>和<code>PageSize</code></p>
 <p>拼接<code>?pageIndex=1&amp;&amp;pageSize=10000</code></p>
-<p></p><figure><img alt="image-20260610104640617" loading="lazy" width="1845" height="1330" src="/_astro/image-20260610104640617.BKfC0UXK_H6twj.webp" /><figcaption>image-20260610104640617</figcaption></figure><p></p>
+<p><img alt="" loading="lazy" width="1845" height="1330" src="/_astro/unauth-fuzz-07.BKfC0UXK_14kTbR.webp" /></p>
 <p>拿下大量用户数据</p>
 <p>在这里其实我已经想到这个系统可能有通杀了</p>
 <p>其中翻到一些用户名像xxxAdmin管理员的，比如什么系统维护，系统管理员之类的</p>
 <p>下面还有一些test，无法确定其权限</p>
-<p></p><figure><img alt="image-20260610105921802" loading="lazy" width="602" height="474" src="/_astro/image-20260610105921802.DCULPJVC_Z2kR6EW.webp" /><figcaption>image-20260610105921802</figcaption></figure><p></p>
+<p><img alt="" loading="lazy" width="602" height="474" src="/_astro/unauth-fuzz-08.DCULPJVC_1z6agc.webp" /></p>
 <p>拿到了一些用户名，回到登录口，挂起burp就是爆破，结果一个爆不出来</p>
 <p>这下有点难受了，但是还不想放弃</p>
 <p>于是兜兜转转回到了/api这里，想看看还有没有什么有用的东西</p>
 <p>结果在一个接口中发现了pass，在js文件的注释里面</p>
-<p></p><figure><img alt="image-20260610114251899" loading="lazy" width="1710" height="812" src="/_astro/image-20260610114251899.CBaTz-IU_1rj6nH.webp" /><figcaption>image-20260610114251899</figcaption></figure><p></p>
+<p><img alt="" loading="lazy" width="1710" height="812" src="/_astro/unauth-fuzz-09.CBaTz-IU_ZsRYLN.webp" /></p>
 <p>不管了抱着能找到点东西就行的心态，直接尝试前面像管理员的几个账号</p>
 <p>直接进后台，拿下超级管理员权限</p>
-<p></p><figure><img alt="image-20260610113603493" loading="lazy" width="2000" height="994" src="/_astro/image-20260610113603493.D49F4I4a_17RGWu.webp" /><figcaption>image-20260610113603493</figcaption></figure><p></p>
+<p><img alt="" loading="lazy" width="2000" height="994" src="/_astro/unauth-fuzz-10.D49F4I4a_1pKB4m.webp" /></p>
 <p>后总结提取该系统指纹特征发现多个单位有该漏洞，也算一个小通杀了嘻嘻</p>
-<p>!</p><figure><img alt="image-20260610113131188" loading="lazy" width="880" height="264" src="/_astro/image-20260610113131188.s3cadiiV_ZK9936.webp" /><figcaption>image-20260610113131188</figcaption></figure><p></p>
-<p></p><figure><img alt="image-20260610114024416" loading="lazy" width="807" height="324" src="/_astro/image-20260610114024416.ChLtEXkv_ZvIOAl.webp" /><figcaption>image-20260610114024416</figcaption></figure><p></p>]]></content>
+<p>!<img alt="" loading="lazy" width="880" height="264" src="/_astro/unauth-fuzz-11.s3cadiiV_2vrcut.webp" /></p>
+<p><img alt="" loading="lazy" width="807" height="324" src="/_astro/unauth-fuzz-12.ChLtEXkv_Z2iGx2E.webp" /></p>]]></content>
     </entry>
     <entry>
       <id>https://linbudao.github.io/posts/%E7%AC%AC%E4%B8%80%E7%AF%87%E5%8D%9A%E5%AE%A2/</id>
