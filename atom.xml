@@ -3,11 +3,27 @@
   <id>https://linbudao.github.io/</id>
   <title type="text">林不到&apos;s 博客酒馆</title>
   <subtitle type="text">Web 安全与渗透测试笔记</subtitle>
-  <updated>2026-07-26T09:01:50.000Z</updated>
+  <updated>2026-09-13T10:30:00.000Z</updated>
   <author><name>林不到</name></author>
   <link rel="alternate" href="https://linbudao.github.io/"/>
   <link rel="self" href="https://linbudao.github.io/atom.xml"/>
   <generator uri="https://github.com/CuteLeaf/Firefly">Firefly v6.16.8</generator>
+    <entry>
+      <id>https://linbudao.github.io/posts/%E8%AE%B0%E4%B8%80%E6%AC%A1hackerone%E6%89%93grafana%E7%9A%84ssrf/</id>
+      <title type="text">记一次hackerone打grafana的ssrf</title>
+      <published>2026-09-13T10:30:00.000Z</published>
+      <updated>2026-09-13T10:30:00.000Z</updated>
+      <author><name>林不到</name></author>
+      <link rel="alternate" href="https://linbudao.github.io/posts/%E8%AE%B0%E4%B8%80%E6%AC%A1hackerone%E6%89%93grafana%E7%9A%84ssrf/"/>
+      <summary type="text">HackerOne 上打 Grafana datasource proxy 的 SSRF 复盘：匿名权限三板斧到 PromQL 读内网</summary>
+      <content type="html"><![CDATA[<p><strong>“Grafana根本就没有ssrf的漏洞！”</strong></p>
+<p><strong>林不到：“你只是怕了”</strong></p>
+<p>站点一上就是<code>grafana</code>的标准页面</p>
+<p></p><figure><img alt="image-20260913162308475" loading="lazy" width="2039" height="1217" src="/_astro/image-20260913162308475.CBDs27kB_Z2ifbxr.webp" /><figcaption>image-20260913162308475</figcaption></figure><p></p>
+<p><code>grafana</code>是什么？</p>
+<section><h2>Grafana<a href="#grafana"><span>#</span></a></h2><p>简单来说就是运维人员放服务器运行比如什么CPU，内存这些指标的好看点的前端</p><p>但<code>grafana</code>自己是不存数据的，数据放在<strong>数据源（datasource）<strong>后端里面，最常见的是</strong>Prometheus</strong>（一个专门存监控数字的数据库），一般来说只有集群内部能访问到</p><p><code>grafana</code>需要对数据源进行连接，两种<code>access</code>模式：<code>proxy</code> 和<code>browser</code></p><p>其中<code>browser</code>也就是浏览器，该模式是安全的，请求者的浏览器去访问数据源那自然是  老子不给~</p><p>而<code>proxy</code>也就是grafana服务器去访问，那包是来就有呀兄弟给你了</p><p>这就是该组件ssrf原理</p></section>
+<section><h2>攻击<a href="#攻击"><span>#</span></a></h2><p>先看看常见健康路径确认状态</p><p></p><figure><img alt="image-20260913163629003" loading="lazy" width="666" height="301" src="/_astro/image-20260913163629003.CY7sg6iz_1U41lp.webp" /><figcaption>image-20260913163629003</figcaption></figure><p></p><p>确认是grafana13.0.1 这个接口不用鉴权，登录页都不用进</p><p>接下来翻翻js找找路径收集信息</p><div><figure><figcaption></figcaption><pre><code><div><div><div>1</div></div><div><span>/api/access-control/user/permissions</span></div></div></code></pre><div><div></div><div></div></div></figure></div><p>这个api给的是你当前状态（登录/未登录）能做哪些事的权限清单</p><p>看到一堆权限</p><p></p><figure><img alt="image-20260913165229931" loading="lazy" width="633" height="583" src="/_astro/image-20260913165229931.Biw9VMjl_ZDEeSz.webp" /><figcaption>image-20260913165229931</figcaption></figure><p></p><p>发现query（请求）权限</p><p>现在就要找找内网地址</p><div><figure><figcaption></figcaption><pre><code><div><div><div>1</div></div><div><span>/api/datasources</span></div></div></code></pre><div><div></div><div></div></div></figure></div><p>全是内网域名和内部服务，获取uid</p><p>最重要的，发现access全是proxy</p><p></p><figure><img alt="image-20260913170033027" loading="lazy" width="873" height="1433" src="/_astro/image-20260913170033027.p4J3nu6T_Z1CG9tq.webp" /><figcaption>image-20260913170033027</figcaption></figure><p></p><p>用grafana的内置代理转发接口来发请求</p><div><figure><figcaption></figcaption><pre><code><div><div><div>1</div></div><div><span>/api/datasources/proxy/uid/&lt;你的uid&gt;/&lt;你想让服务器替你访问的路径&gt;</span></div></div></code></pre><div><div></div><div></div></div></figure></div><p><code>/api/v1/labels</code> 是 Prometheus 的”列出所有指标名”接口，原本<code>&lt;内网Prometheus&gt;/api/v1/labels</code> 肯定是访问不上的，通过grafana转发接口可以获取信息，自此ssrf确认</p><p></p><figure><img alt="image-20260913170332228" loading="lazy" width="1174" height="1278" src="/_astro/image-20260913170332228.CI3l6gA4_Z1iWgtR.webp" /><figcaption>image-20260913170332228</figcaption></figure><p></p><p>现在我们用用 Prometheus 的查询语言 PromQL 看看集群信息</p><p>查询成功，之后任何内网数据都可以这样捞出来</p><p></p><figure><img alt="image-20260913171015577" loading="lazy" width="1432" height="542" src="/_astro/image-20260913171015577.CEksb2X2_Z1uONIU.webp" /><figcaption>image-20260913171015577</figcaption></figure><p></p><p>比如</p><p></p><figure><img alt="image-20260913173826796" loading="lazy" width="1469" height="891" src="/_astro/image-20260913173826796.BUrY_Adm_Z2wFqJM.webp" /><figcaption>image-20260913173826796</figcaption></figure><p></p><p>机器内网IP <code>10.0.***.93</code>、宿主机名、kubelet/kernel 精确版本、BOSKOS 业务身份、161 个 Secret 的目录清单、3847 种指标可查</p><p>完毕</p></section>]]></content>
+    </entry>
     <entry>
       <id>https://linbudao.github.io/posts/urldns%E9%93%BE/</id>
       <title type="text">URLDNS链</title>
